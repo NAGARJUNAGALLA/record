@@ -14,10 +14,6 @@
         "FOREGROUND_SERVICE",
         "FOREGROUND_SERVICE_MEDIA_PROJECTION"
       ]
-    },
-    "plugins": [
-      "expo-document-picker",
-      "expo-speech"
-    ]
+    }
   }
 }
