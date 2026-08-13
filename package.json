@@ -16,7 +16,8 @@
     "expo-document-picker": "~11.5.4",
     "expo-speech": "~11.3.0",
     "react-native-blob-util": "^0.19.2",
-    "react-native-record-screen": "^0.6.2"
+    "react-native-record-screen": "^0.6.2",
+    "expo-build-properties": "~0.8.3"
   },
   "devDependencies": {
     "@babel/core": "^7.20.0"
