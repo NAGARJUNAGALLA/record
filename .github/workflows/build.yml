@@ -4,7 +4,7 @@ on:
   push:
     branches:
       - main
-  workflow_dispatch: # Allows you to trigger the build manually
+  workflow_dispatch:
 
 jobs:
   build:
@@ -18,7 +18,6 @@ jobs:
         uses: actions/setup-node@v4
         with:
           node-version: '18'
-          # Removed the cache line so it doesn't look for package-lock.json
 
       - name: Setup Java JDK
         uses: actions/setup-java@v4
@@ -31,6 +30,13 @@ jobs:
 
       - name: Generate Native Android Project
         run: npx expo prebuild --platform android --clean
+
+      - name: Fix JitPack Dependency Resolution
+        run: |
+          # 1. Add JitPack globally to the main Android project
+          sed -i "s/mavenCentral()/mavenCentral()\n        maven { url 'https:\/\/jitpack.io' }/g" android/build.gradle
+          # 2. Fix the broken www. URL inside the screen recorder node module
+          sed -i 's/www.jitpack.io/jitpack.io/g' node_modules/react-native-record-screen/android/build.gradle || true
 
       - name: Build APK (Assemble Release)
         working-directory: android
