@@ -31,9 +31,16 @@ jobs:
       - name: Generate Native Android Project
         run: npx expo prebuild --platform android --clean
 
-      - name: Add JitPack Repository
+      - name: Inject JitPack Safely
         run: |
-          sed -i "s/mavenCentral()/mavenCentral()\n        maven { url 'https:\/\/jitpack.io' }/g" android/build.gradle
+          node -e "
+          const fs = require('fs');
+          const file = 'android/build.gradle';
+          let code = fs.readFileSync(file, 'utf8');
+          // Safely target ONLY the allprojects repositories block
+          code = code.replace(/allprojects\s*\{\s*repositories\s*\{/, \"allprojects {\\n    repositories {\\n        maven { url 'https://jitpack.io' }\");
+          fs.writeFileSync(file, code);
+          "
 
       - name: Build APK (Assemble Release)
         working-directory: android
