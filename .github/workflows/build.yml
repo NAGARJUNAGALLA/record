@@ -31,11 +31,13 @@ jobs:
       - name: Generate Native Android Project
         run: npx expo prebuild --platform android --clean
 
-      - name: Fix JitPack Dependency Resolution
+      - name: Fix HBRecorder Typo and JitPack
         run: |
           # 1. Add JitPack globally to the main Android project
           sed -i "s/mavenCentral()/mavenCentral()\n        maven { url 'https:\/\/jitpack.io' }/g" android/build.gradle
-          # 2. Fix the broken www. URL inside the screen recorder node module
+          # 2. Fix the case-sensitivity typo in the screen recorder module (HBISoft -> HBiSoft)
+          sed -i 's/HBISoft:HBRecorder/HBiSoft:HBRecorder/g' node_modules/react-native-record-screen/android/build.gradle
+          # 3. Fix the broken www. URL just in case
           sed -i 's/www.jitpack.io/jitpack.io/g' node_modules/react-native-record-screen/android/build.gradle || true
 
       - name: Build APK (Assemble Release)
