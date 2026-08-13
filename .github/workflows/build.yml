@@ -28,20 +28,20 @@ jobs:
       - name: Install Node Modules
         run: npm install
 
+      - name: Patch Node Modules (Before Prebuild)
+        run: |
+          # Fix the case-sensitivity typo BEFORE Gradle is ever launched
+          find node_modules/react-native-record-screen -type f -name "*.gradle" -exec sed -i 's/HBISoft/HBiSoft/g' {} +
+          # Fix the broken URL scheme
+          find node_modules/react-native-record-screen -type f -name "*.gradle" -exec sed -i 's/www.jitpack.io/jitpack.io/g' {} +
+
       - name: Generate Native Android Project
         run: npx expo prebuild --platform android --clean
 
-      - name: Global Fix for HBRecorder and JitPack
+      - name: Inject JitPack Repository
         run: |
-          # 1. Search every gradle file in node_modules and fix the HBISoft case-sensitivity typo
-          find node_modules -type f -name "*.gradle" -exec sed -i 's/HBISoft/HBiSoft/g' {} +
-          
-          # 2. Search every gradle file and fix the broken www.jitpack.io URLs
-          find node_modules -type f -name "*.gradle" -exec sed -i 's/www.jitpack.io/jitpack.io/g' {} +
-          find android -type f -name "*.gradle" -exec sed -i 's/www.jitpack.io/jitpack.io/g' {} +
-          
-          # 3. Ensure standard jitpack is injected into the root Android repositories
-          sed -i "s/mavenCentral()/mavenCentral()\n        maven { url 'https:\/\/jitpack.io' }/g" android/build.gradle || true
+          # Inject JitPack into the newly generated Android folder
+          sed -i "s/mavenCentral()/mavenCentral()\n        maven { url 'https:\/\/jitpack.io' }/g" android/build.gradle
 
       - name: Build APK (Assemble Release)
         working-directory: android
