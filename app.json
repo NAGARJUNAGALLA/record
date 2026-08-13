@@ -1,0 +1,23 @@
+{
+  "expo": {
+    "name": "StudyReader Pro",
+    "slug": "study-reader-pro",
+    "version": "1.0.0",
+    "orientation": "portrait",
+    "userInterfaceStyle": "light",
+    "android": {
+      "package": "com.yourname.studyreader",
+      "permissions": [
+        "RECORD_AUDIO",
+        "READ_EXTERNAL_STORAGE",
+        "WRITE_EXTERNAL_STORAGE",
+        "FOREGROUND_SERVICE",
+        "FOREGROUND_SERVICE_MEDIA_PROJECTION"
+      ]
+    },
+    "plugins": [
+      "expo-document-picker",
+      "expo-speech"
+    ]
+  }
+}
