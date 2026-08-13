@@ -28,19 +28,11 @@ jobs:
       - name: Install Node Modules
         run: npm install
 
-      - name: Patch Node Modules (Before Prebuild)
-        run: |
-          # Fix the case-sensitivity typo BEFORE Gradle is ever launched
-          find node_modules/react-native-record-screen -type f -name "*.gradle" -exec sed -i 's/HBISoft/HBiSoft/g' {} +
-          # Fix the broken URL scheme
-          find node_modules/react-native-record-screen -type f -name "*.gradle" -exec sed -i 's/www.jitpack.io/jitpack.io/g' {} +
-
       - name: Generate Native Android Project
         run: npx expo prebuild --platform android --clean
 
-      - name: Inject JitPack Repository
+      - name: Add JitPack Repository
         run: |
-          # Inject JitPack into the newly generated Android folder
           sed -i "s/mavenCentral()/mavenCentral()\n        maven { url 'https:\/\/jitpack.io' }/g" android/build.gradle
 
       - name: Build APK (Assemble Release)
