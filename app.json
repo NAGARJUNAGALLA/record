@@ -14,6 +14,17 @@
         "FOREGROUND_SERVICE",
         "FOREGROUND_SERVICE_MEDIA_PROJECTION"
       ]
-    }
+    },
+    "plugins": [
+      [
+        "expo-build-properties",
+        {
+          "android": {
+            "minSdkVersion": 24,
+            "kotlinVersion": "1.8.10"
+          }
+        }
+      ]
+    ]
   }
 }
