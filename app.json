@@ -3,7 +3,7 @@
     "name": "StudyReader Pro",
     "slug": "study-reader-pro",
     "version": "1.0.0",
-    "orientation": "portrait",
+    "orientation": "default",
     "userInterfaceStyle": "light",
     "android": {
       "package": "com.yourname.studyreader",
