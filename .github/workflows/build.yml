@@ -12,16 +12,16 @@ jobs:
 
     steps:
       - name: Checkout Repository
-        uses: actions/checkout@v4 # Changed to v4
+        uses: actions/checkout@v4
 
       - name: Setup Node.js
-        uses: actions/setup-node@v4 # Changed to v4
+        uses: actions/setup-node@v4
         with:
           node-version: '18'
-          cache: 'npm'
+          # Removed the cache line so it doesn't look for package-lock.json
 
       - name: Setup Java JDK
-        uses: actions/setup-java@v4 # Changed to v4
+        uses: actions/setup-java@v4
         with:
           distribution: 'zulu'
           java-version: '17'
@@ -37,7 +37,7 @@ jobs:
         run: ./gradlew assembleRelease --no-daemon
 
       - name: Upload APK Artifact
-        uses: actions/upload-artifact@v4 # Changed to v4 to fix the error
+        uses: actions/upload-artifact@v4
         with:
           name: app-release
           path: android/app/build/outputs/apk/release/app-release.apk
