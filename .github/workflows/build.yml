@@ -31,14 +31,17 @@ jobs:
       - name: Generate Native Android Project
         run: npx expo prebuild --platform android --clean
 
-      - name: Fix HBRecorder Typo and JitPack
+      - name: Global Fix for HBRecorder and JitPack
         run: |
-          # 1. Add JitPack globally to the main Android project
-          sed -i "s/mavenCentral()/mavenCentral()\n        maven { url 'https:\/\/jitpack.io' }/g" android/build.gradle
-          # 2. Fix the case-sensitivity typo in the screen recorder module (HBISoft -> HBiSoft)
-          sed -i 's/HBISoft:HBRecorder/HBiSoft:HBRecorder/g' node_modules/react-native-record-screen/android/build.gradle
-          # 3. Fix the broken www. URL just in case
-          sed -i 's/www.jitpack.io/jitpack.io/g' node_modules/react-native-record-screen/android/build.gradle || true
+          # 1. Search every gradle file in node_modules and fix the HBISoft case-sensitivity typo
+          find node_modules -type f -name "*.gradle" -exec sed -i 's/HBISoft/HBiSoft/g' {} +
+          
+          # 2. Search every gradle file and fix the broken www.jitpack.io URLs
+          find node_modules -type f -name "*.gradle" -exec sed -i 's/www.jitpack.io/jitpack.io/g' {} +
+          find android -type f -name "*.gradle" -exec sed -i 's/www.jitpack.io/jitpack.io/g' {} +
+          
+          # 3. Ensure standard jitpack is injected into the root Android repositories
+          sed -i "s/mavenCentral()/mavenCentral()\n        maven { url 'https:\/\/jitpack.io' }/g" android/build.gradle || true
 
       - name: Build APK (Assemble Release)
         working-directory: android
