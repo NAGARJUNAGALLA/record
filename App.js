@@ -18,7 +18,6 @@ export default function App() {
   const [isSpeaking, setIsSpeaking] = useState(false);
   const [isRecording, setIsRecording] = useState(false);
   
-  // Fullscreen & Orientation State
   const [isLandscape, setIsLandscape] = useState(false);
 
   // Pen & Drawing States
@@ -29,7 +28,6 @@ export default function App() {
 
   const pdfRef = useRef(null);
 
-  // --- 1. FULLSCREEN / 16:9 LANDSCAPE TOGGLE ---
   const toggleFullScreen = async () => {
     if (isLandscape) {
       await ScreenOrientation.lockAsync(ScreenOrientation.OrientationLock.PORTRAIT_UP);
@@ -40,7 +38,6 @@ export default function App() {
     }
   };
 
-  // --- 2. PEN & DRAWING ENGINE ---
   const togglePen = () => {
     setPenMode(!penMode);
     setIsHighlighter(false);
@@ -69,16 +66,20 @@ export default function App() {
       path: currentPath,
       color: isHighlighter ? 'rgba(255, 235, 59, 0.5)' : 'rgba(255, 50, 50, 0.8)',
       strokeWidth: isHighlighter ? 18 : 3,
+      page: currentPage, // Lock stroke to the current page
     };
     setPaths([...paths, newStroke]);
     setCurrentPath('');
   };
 
   const undoLastStroke = () => {
-    setPaths(paths.slice(0, -1));
+    const pageStrokes = paths.filter(p => p.page === currentPage);
+    if (pageStrokes.length > 0) {
+      const lastStroke = pageStrokes[pageStrokes.length - 1];
+      setPaths(paths.filter(p => p !== lastStroke));
+    }
   };
 
-  // --- 3. PERMISSIONS & RECORDING ---
   const requestPermissions = async () => {
     if (Platform.OS === 'android') {
       try {
@@ -100,13 +101,8 @@ export default function App() {
 
   const pickDocument = async () => {
     try {
-      const result = await DocumentPicker.getDocumentAsync({
-        type: 'application/pdf',
-        copyToCacheDirectory: true,
-      });
-      if (result.assets && result.assets.length > 0) {
-        setPdfUri(result.assets[0].uri);
-      }
+      const result = await DocumentPicker.getDocumentAsync({ type: 'application/pdf', copyToCacheDirectory: true });
+      if (result.assets && result.assets.length > 0) setPdfUri(result.assets[0].uri);
     } catch (err) {
       Alert.alert('Error', 'Failed to load PDF');
     }
@@ -139,7 +135,6 @@ export default function App() {
       const res = await RecordScreen.startRecording().catch((error) => console.warn(error));
       if (res === 'started') {
         setIsRecording(true);
-        Alert.alert('Recording Started', 'Capturing screen...');
       }
     }
   };
@@ -164,68 +159,53 @@ export default function App() {
     <SafeAreaView style={[styles.container, { backgroundColor: theme.bgBody }]}>
       <StatusBar hidden={isLandscape} barStyle={isDarkMode ? 'light-content' : 'dark-content'} />
       
-      {/* Top Header Controls */}
+      {/* EXACT HTML REPLICA: Top Bar */}
       <View style={[styles.topBar, { backgroundColor: theme.bgNav, borderBottomColor: theme.borderColor }]}>
         <Text style={[styles.appTitle, { color: theme.textMain }]} numberOfLines={1}>Document Viewer</Text>
         <View style={styles.controlsGroup}>
           
-          {/* Undo Button */}
-          {penMode && (
-            <TouchableOpacity style={[styles.iconBtn, { borderColor: theme.borderColor }]} onPress={undoLastStroke}>
-              <Text style={{ color: theme.textMain }}>↩️</Text>
-            </TouchableOpacity>
-          )}
+          <TouchableOpacity style={[styles.iconBtn, { borderColor: theme.borderColor }]} onPress={undoLastStroke}>
+            <Text style={{ color: theme.textMain }}>↩️</Text>
+          </TouchableOpacity>
 
-          {/* Record Button */}
           <TouchableOpacity style={[styles.iconBtn, isRecording && styles.iconBtnRecord, { borderColor: theme.borderColor }]} onPress={toggleRecording}>
             <Text style={{ color: isRecording ? '#ff0000' : theme.textMain }}>{isRecording ? '⏹️' : '⏺️'}</Text>
           </TouchableOpacity>
 
-          {/* Pen Button */}
           <TouchableOpacity style={[styles.iconBtn, penMode && !isHighlighter && styles.iconBtnActive, { borderColor: theme.borderColor }]} onPress={togglePen}>
             <Text style={{ color: theme.textMain }}>🖋️</Text>
           </TouchableOpacity>
 
-          {/* Highlighter Button */}
           <TouchableOpacity style={[styles.iconBtn, isHighlighter && styles.iconBtnHighlight, { borderColor: theme.borderColor }]} onPress={toggleHighlighter}>
             <Text style={{ color: theme.textMain }}>🖍️</Text>
           </TouchableOpacity>
 
-          {/* Read Aloud */}
           <TouchableOpacity style={[styles.iconBtn, { borderColor: theme.borderColor }]} onPress={toggleTTS}>
             <Text style={{ color: theme.textMain }}>{isSpeaking ? '⏸️' : '🔊'}</Text>
           </TouchableOpacity>
 
-          {/* Theme Toggle */}
           <TouchableOpacity style={[styles.iconBtn, { borderColor: theme.borderColor }]} onPress={() => setIsDarkMode(!isDarkMode)}>
             <Text style={{ color: theme.textMain }}>🌓</Text>
           </TouchableOpacity>
 
-          {/* Fullscreen 16:9 Landscape Toggle */}
           <TouchableOpacity style={[styles.iconBtn, isLandscape && styles.iconBtnActive, { borderColor: theme.borderColor }]} onPress={toggleFullScreen}>
             <Text style={{ color: theme.textMain }}>⛶</Text>
           </TouchableOpacity>
         </View>
       </View>
 
-      {/* Progress Line */}
-      {!isLandscape && (
-        <View style={[styles.progressContainer, { backgroundColor: theme.borderColor }]}>
-          <View style={[styles.progressBar, { width: `${(currentPage / totalPages) * 100}%`, backgroundColor: theme.accent }]} />
-        </View>
-      )}
-
-      {/* Main Viewport containing PDF and SVG Drawing Layer */}
+      {/* EXACT HTML REPLICA: Main Viewport (PDF + Canvas) */}
       <View style={styles.readerViewport}>
         <Pdf
           ref={pdfRef}
           source={{ uri: pdfUri, cache: true }}
           onLoadComplete={(numberOfPages) => setTotalPages(numberOfPages)}
           onPageChanged={(page) => setCurrentPage(page)}
+          horizontal={true}
+          enablePaging={true}
           style={[styles.pdf, isDarkMode && { opacity: 0.85 }]}
         />
 
-        {/* SVG Drawing Canvas Overlay */}
         <View 
           style={styles.drawingOverlay}
           pointerEvents={penMode ? 'auto' : 'none'}
@@ -234,7 +214,7 @@ export default function App() {
           onTouchEnd={handleTouchEnd}
         >
           <Svg style={StyleSheet.absoluteFill}>
-            {paths.map((item, index) => (
+            {paths.filter(p => p.page === currentPage).map((item, index) => (
               <Path key={index} d={item.path} stroke={item.color} strokeWidth={item.strokeWidth} strokeLinecap="round" strokeLinejoin="round" fill="none" />
             ))}
             {currentPath !== '' && (
@@ -244,7 +224,7 @@ export default function App() {
         </View>
       </View>
 
-      {/* Bottom Navigation */}
+      {/* EXACT HTML REPLICA: Bottom Bar */}
       {!isLandscape && (
         <View style={[styles.bottomBar, { backgroundColor: theme.bgNav, borderTopColor: theme.borderColor }]}>
           <TouchableOpacity 
@@ -279,6 +259,8 @@ const styles = StyleSheet.create({
   uploadTitle: { fontSize: 24, fontWeight: 'bold', marginBottom: 20 },
   uploadBox: { borderWidth: 2, borderStyle: 'dashed', padding: 40, borderRadius: 10, alignItems: 'center' },
   uploadBtnText: { color: '#4a90e2', fontWeight: 'bold', fontSize: 16 },
+  
+  /* Top Bar CSS Replica */
   topBar: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', padding: 8, borderBottomWidth: 1 },
   appTitle: { fontSize: 16, fontWeight: 'bold', flex: 1 },
   controlsGroup: { flexDirection: 'row', gap: 6 },
@@ -286,13 +268,15 @@ const styles = StyleSheet.create({
   iconBtnRecord: { backgroundColor: 'rgba(255, 0, 0, 0.2)', borderColor: '#ff0000' },
   iconBtnActive: { backgroundColor: 'rgba(255, 50, 50, 0.2)', borderColor: '#ff3232' },
   iconBtnHighlight: { backgroundColor: 'rgba(255, 235, 59, 0.3)', borderColor: '#ffeb3b' },
-  progressContainer: { height: 4, width: '100%' },
-  progressBar: { height: '100%' },
-  readerViewport: { flex: 1, position: 'relative', width: '100%' },
+  
+  /* Viewport CSS Replica */
+  readerViewport: { flex: 1, position: 'relative', width: '100%', overflow: 'hidden' },
   pdf: { flex: 1, width: '100%', height: '100%' },
   drawingOverlay: { ...StyleSheet.absoluteFillObject, zIndex: 10 },
-  bottomBar: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', padding: 8, borderTopWidth: 1 },
-  navBtn: { paddingHorizontal: 18, paddingVertical: 8, borderRadius: 5 },
-  navBtnText: { color: 'white', fontWeight: 'bold' },
-  pageIndicator: { fontSize: 14 },
+  
+  /* Bottom Bar CSS Replica */
+  bottomBar: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', padding: 12, borderTopWidth: 1 },
+  navBtn: { paddingHorizontal: 20, paddingVertical: 10, borderRadius: 5 },
+  navBtnText: { color: 'white', fontWeight: 'bold', fontSize: 16 },
+  pageIndicator: { fontSize: 16, fontWeight: '500' },
 });
